@@ -8,14 +8,14 @@ data class CloudAccount(
     val provider: String,
     val displayName: String,
     val email: String,
-    val refreshToken: String
+    val accessToken: String
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
         put("accountId", accountId)
         put("provider", provider)
         put("displayName", displayName)
         put("email", email)
-        put("refreshToken", refreshToken)
+        put("accessToken", accessToken)
     }
 
     companion object {
@@ -24,7 +24,7 @@ data class CloudAccount(
             o.getString("provider"),
             o.getString("displayName"),
             o.getString("email"),
-            o.getString("refreshToken")
+            o.getString("accessToken")
         )
     }
 }

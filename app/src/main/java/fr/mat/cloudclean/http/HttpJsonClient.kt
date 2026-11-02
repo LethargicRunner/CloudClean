@@ -1,6 +1,7 @@
 package fr.mat.cloudclean.http
 
 import org.json.JSONObject
+import java.io.IOException
 import java.net.URL
 import java.net.URLEncoder
 import javax.net.ssl.HttpsURLConnection
@@ -14,7 +15,7 @@ object HttpJsonClient {
         val retryAfterSeconds: Int? = null
     ) : Exception("HTTP " + code + (retryAfterSeconds?.let { " (retry after " + it + " s)" } ?: "") + " : " + (body?.take(200) ?: ""))
 
-    /** POST JSON (API RPC Dropbox). Retente automatiquement sur 429 (Retry-After) et 5xx. */
+    /** POST JSON. Retente automatiquement sur 429 (Retry-After) et 5xx. */
     fun postJson(
         url: String,
         bearerToken: String? = null,
@@ -26,7 +27,7 @@ object HttpJsonClient {
         "application/json", retries
     )
 
-    /** POST form-urlencoded (echange et refresh du jeton OAuth). */
+    /** POST form-urlencoded (echange OAuth). */
     fun postForm(
         url: String,
         form: Map<String, String>,
@@ -42,17 +43,27 @@ object HttpJsonClient {
         )
     }
 
+    /** GET (API pCloud : parametres dans la query string, reponse JSON). */
+    fun getJson(
+        url: String,
+        bearerToken: String? = null,
+        retries: Int = 2
+    ): JSONObject = postWithRetry(
+        url, bearerToken, ByteArray(0), "application/json", retries, httpMethod = "GET"
+    )
+
     private fun postWithRetry(
         url: String,
         bearerToken: String?,
         payload: ByteArray,
         contentType: String,
-        retries: Int
+        retries: Int,
+        httpMethod: String = "POST"
     ): JSONObject {
         var attempt = 0
         while (true) {
             try {
-                return postOnce(url, bearerToken, payload, contentType)
+                return postOnce(url, bearerToken, payload, contentType, httpMethod)
             } catch (e: HttpError) {
                 val retryable = e.code == 429 || e.code >= 500
                 if (!retryable || attempt >= retries) throw e
@@ -67,17 +78,20 @@ object HttpJsonClient {
         url: String,
         bearerToken: String?,
         payload: ByteArray,
-        contentType: String
+        contentType: String,
+        httpMethod: String
     ): JSONObject {
         val conn = URL(url).openConnection() as HttpsURLConnection
         try {
-            conn.requestMethod = "POST"
+            conn.requestMethod = httpMethod
             conn.connectTimeout = 30_000
             conn.readTimeout = 60_000
-            conn.doOutput = true
             conn.setRequestProperty("Content-Type", contentType)
             bearerToken?.let { conn.setRequestProperty("Authorization", "Bearer " + it) }
-            conn.outputStream.use { it.write(payload) }
+            if (httpMethod == "POST") {
+                conn.doOutput = true
+                conn.outputStream.use { it.write(payload) }
+            }
 
             val code = conn.responseCode
             val stream = if (code in 200..299) conn.inputStream else conn.errorStream

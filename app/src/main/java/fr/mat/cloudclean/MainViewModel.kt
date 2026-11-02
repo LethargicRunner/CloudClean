@@ -5,17 +5,17 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fr.mat.cloudclean.data.AccountRepository
 import fr.mat.cloudclean.data.BrowseRepository
-import fr.mat.cloudclean.dropbox.DropboxAuth
 import fr.mat.cloudclean.model.CloudAccount
 import fr.mat.cloudclean.model.CloudEntry
+import fr.mat.cloudclean.pcloud.PCloudAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val auth = DropboxAuth(app)
+    private val auth = PCloudAuth(app)
     private val accounts = AccountRepository(app)
-    private val browseRepo = BrowseRepository(auth)
+    private val browseRepo = BrowseRepository()
 
     val accountList = MutableStateFlow<List<CloudAccount>>(emptyList())
     val currentAccount = MutableStateFlow<CloudAccount?>(null)
@@ -28,7 +28,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun reloadAccounts() { accountList.value = accounts.list() }
 
-    fun auth(): DropboxAuth = auth
+    fun auth(): PCloudAuth = auth
 
     fun openAccount(account: CloudAccount) {
         currentAccount.value = account
@@ -60,10 +60,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 accounts.upsert(
                     CloudAccount(
                         accountId = result.accountId,
-                        provider = "dropbox",
+                        provider = "pcloud",
                         displayName = result.displayName,
                         email = result.email,
-                        refreshToken = result.refreshToken
+                        accessToken = result.accessToken
                     )
                 )
                 reloadAccounts()
@@ -76,11 +76,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun load() {
         val account = currentAccount.value ?: return
-        val dropboxPath = path.value.joinToString("") { "/" + it }
+        val pcloudPath = path.value.joinToString("") { "/" + it }
         viewModelScope.launch {
             loading.value = true
             entries.value = try {
-                browseRepo.list(account, dropboxPath)
+                browseRepo.list(account, pcloudPath)
             } catch (e: Exception) {
                 message.value = "Erreur : " + e.message
                 emptyList()

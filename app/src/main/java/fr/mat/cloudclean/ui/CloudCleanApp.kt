@@ -51,7 +51,7 @@ private fun AccountsScreen(
         Spacer(Modifier.height(16.dp))
         if (accounts.isEmpty()) {
             Text(
-                "Aucun compte. Ajoute un compte Dropbox pour commencer.",
+                "Aucun compte. Ajoute un compte pCloud pour commencer.",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -72,7 +72,7 @@ private fun AccountsScreen(
         Button(onClick = onStartAddAccount) {
             Icon(Icons.Default.Add, null)
             Spacer(Modifier.width(8.dp))
-            Text("Ajouter un compte Dropbox")
+            Text("Ajouter un compte pCloud")
         }
     }
 }
