@@ -4,6 +4,8 @@ package fr.mat.cloudclean.model
 data class CloudEntry(
     val id: String,
     val name: String,
+    /** Identifiant de navigation du dossier (provider-specifique). */
+    val folderId: String?,
     val pathLower: String,
     val isFolder: Boolean,
     val size: Long,

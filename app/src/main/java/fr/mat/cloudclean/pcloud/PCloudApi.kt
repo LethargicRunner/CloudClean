@@ -3,24 +3,28 @@ package fr.mat.cloudclean.pcloud
 import fr.mat.cloudclean.Constants
 import fr.mat.cloudclean.http.HttpJsonClient
 import fr.mat.cloudclean.model.CloudEntry
+import java.net.URLEncoder
 
 /** Acces lecture seule aux fichiers pCloud. Erreurs API via champ "result" != 0. */
 class PCloudApi {
 
     /**
-     * Liste un dossier. path = chemin pCloud ("/" = racine).
-     * La region (US/EU) du compte est decouverte automatiquement puis mise en cache.
+     * Liste un dossier. folderId vide = racine. La region (US/EU) du compte
+     * est decouverte automatiquement en testant les deux hosts.
      */
-    suspend fun listFolder(accessToken: String, path: String): List<CloudEntry> {
-        val encodedPath = if (path.isEmpty()) "/" else path
+    suspend fun listFolder(accessToken: String, folderId: String): List<CloudEntry> {
+        val pathParam = if (folderId.isEmpty()) {
+            "path=" + URLEncoder.encode("/", "UTF-8")
+        } else {
+            "folderid=" + folderId
+        }
         val hosts = listOf(Constants.API_PCLOUD_US, Constants.API_PCLOUD_EU)
         var lastError: Exception? = null
 
         for (host in hosts) {
             try {
                 val resp = HttpJsonClient.getJson(
-                    host + "/listfolder?path=" +
-                        java.net.URLEncoder.encode(encodedPath, "UTF-8") +
+                    host + "/listfolder?" + pathParam +
                         "&recursive=0&noshares=0&nofiles=0&showdeleted=0",
                     accessToken
                 )
@@ -28,7 +32,7 @@ class PCloudApi {
                     lastError = PCloudApiException(
                         resp.optInt("result"), resp.optString("error")
                     )
-                    continue // mauvaise region ou erreur temporaire : on tente l'autre host
+                    continue // mauvaise region ou erreur : on tente l'autre host
                 }
                 return parseContents(resp)
             } catch (e: Exception) {
@@ -43,11 +47,13 @@ class PCloudApi {
             ?: return emptyList()
         return (0 until contents.length()).map { i ->
             val e = contents.getJSONObject(i)
+            val isFolder = e.optBoolean("isfolder")
             CloudEntry(
                 id = e.getString("id"),
                 name = e.getString("name"),
+                folderId = if (isFolder) e.optLong("folderid").toString() else null,
                 pathLower = e.optString("path"),
-                isFolder = e.optBoolean("isfolder"),
+                isFolder = isFolder,
                 size = e.optLong("size"),
                 // Hash de contenu expose par l'API : base de la dedup sans telechargement
                 contentHash = if (e.optLong("hash", -1L) == -1L) null else e.optLong("hash").toString(),

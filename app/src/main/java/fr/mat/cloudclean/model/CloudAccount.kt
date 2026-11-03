@@ -8,7 +8,10 @@ data class CloudAccount(
     val provider: String,
     val displayName: String,
     val email: String,
-    val accessToken: String
+    /** Jeton permanent (pCloud) ou jeton d'acces Google. */
+    val accessToken: String,
+    /** Google uniquement : necessaire pour rafraichir les jetons ~1 h. */
+    val refreshToken: String? = null
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
         put("accountId", accountId)
@@ -16,6 +19,7 @@ data class CloudAccount(
         put("displayName", displayName)
         put("email", email)
         put("accessToken", accessToken)
+        put("refreshToken", refreshToken ?: "")
     }
 
     companion object {
@@ -24,7 +28,8 @@ data class CloudAccount(
             o.getString("provider"),
             o.getString("displayName"),
             o.getString("email"),
-            o.getString("accessToken")
+            o.getString("accessToken"),
+            o.optString("refreshToken").ifEmpty { null }
         )
     }
 }

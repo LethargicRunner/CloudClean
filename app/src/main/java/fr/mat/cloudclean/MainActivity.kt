@@ -14,14 +14,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            CloudCleanApp(viewModel, onStartAddAccount = {
-                startActivity(viewModel.auth().startAuth())
-            })
+            CloudCleanApp(
+                viewModel,
+                onAddPCloud = { viewModel.startAddPCloud(this) },
+                onAddGoogle = { viewModel.startAddGoogle(this) }
+            )
         }
         handleIntent(intent)
     }
 
-    /** singleTask : le redirect OAuth arrive par onNewIntent. */
+    /** singleTask : les redirects OAuth arrivent par onNewIntent. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleIntent(intent)

@@ -20,7 +20,11 @@ import fr.mat.cloudclean.model.CloudAccount
 import fr.mat.cloudclean.model.CloudEntry
 
 @Composable
-fun CloudCleanApp(vm: MainViewModel, onStartAddAccount: () -> Unit) {
+fun CloudCleanApp(
+    vm: MainViewModel,
+    onAddPCloud: () -> Unit,
+    onAddGoogle: () -> Unit
+) {
     val account by vm.accountList.collectAsState()
     val current by vm.currentAccount.collectAsState()
     val snackbar = remember { SnackbarHostState() }
@@ -33,7 +37,7 @@ fun CloudCleanApp(vm: MainViewModel, onStartAddAccount: () -> Unit) {
     MaterialTheme {
         Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
             Column(Modifier.padding(padding).fillMaxSize()) {
-                if (current == null) AccountsScreen(vm, account, onStartAddAccount)
+                if (current == null) AccountsScreen(vm, account, onAddPCloud, onAddGoogle)
                 else BrowseScreen(vm)
             }
         }
@@ -44,18 +48,19 @@ fun CloudCleanApp(vm: MainViewModel, onStartAddAccount: () -> Unit) {
 private fun AccountsScreen(
     vm: MainViewModel,
     accounts: List<CloudAccount>,
-    onStartAddAccount: () -> Unit
+    onAddPCloud: () -> Unit,
+    onAddGoogle: () -> Unit
 ) {
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Text("Comptes connectes", style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
         if (accounts.isEmpty()) {
             Text(
-                "Aucun compte. Ajoute un compte pCloud pour commencer.",
+                "Aucun compte. Ajoute un compte pour commencer.",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
-        LazyColumn {
+        LazyColumn(Modifier.weight(1f)) {
             items(accounts, key = { it.accountId }) { acc ->
                 ListItem(
                     headlineContent = { Text(acc.displayName) },
@@ -69,10 +74,17 @@ private fun AccountsScreen(
             }
         }
         Spacer(Modifier.height(16.dp))
-        Button(onClick = onStartAddAccount) {
-            Icon(Icons.Default.Add, null)
-            Spacer(Modifier.width(8.dp))
-            Text("Ajouter un compte pCloud")
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Button(onClick = onAddPCloud) {
+                Icon(Icons.Default.Add, null)
+                Spacer(Modifier.width(8.dp))
+                Text("pCloud")
+            }
+            Button(onClick = onAddGoogle) {
+                Icon(Icons.Default.Add, null)
+                Spacer(Modifier.width(8.dp))
+                Text("Google Drive")
+            }
         }
     }
 }
@@ -93,7 +105,7 @@ private fun BrowseScreen(vm: MainViewModel) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Dossier parent")
             }
             Text(
-                if (path.isEmpty()) (current?.displayName ?: "") else path.last(),
+                if (path.isEmpty()) (current?.displayName ?: "") else path.last().name,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.align(Alignment.CenterVertically)
             )
@@ -119,7 +131,7 @@ private fun BrowseScreen(vm: MainViewModel) {
                         )
                     },
                     modifier = Modifier.clickable(enabled = entry.isFolder) {
-                        vm.openFolder(entry.name)
+                        vm.openFolder(entry.name, entry.folderId ?: entry.id)
                     }
                 )
             }
