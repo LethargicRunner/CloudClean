@@ -69,11 +69,12 @@ class PCloudAuth(private val context: Context) {
         val uid = tokenResp.optLong("uid")
 
         // Identite du compte (userinfo) — tente les deux regions.
-        val info = HttpJsonClient.getJson(
+        var info = HttpJsonClient.getJson(
             Constants.API_PCLOUD_US + "/userinfo", accessToken
         )
         if (info.optInt("result", 0) != 0) {
-            HttpJsonClient.getJson(
+            // Compte heberge en Europe : on retente sur eapi.pcloud.com
+            info = HttpJsonClient.getJson(
                 Constants.API_PCLOUD_EU + "/userinfo", accessToken
             )
         }
