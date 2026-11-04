@@ -8,7 +8,9 @@ import java.net.URLEncoder
 /** Acces lecture seule a Google Drive (API v3). md5Checksum = base de la dedup future. */
 class GoogleApi(private val auth: GoogleAuth) {
 
-    private const val FOLDER_MIME = "application/vnd.google-apps.folder"
+    companion object {
+        private const val FOLDER_MIME = "application/vnd.google-apps.folder"
+    }
 
     // accountId -> (access token, expiration ms)
     private val tokenCache = HashMap<String, Pair<String, Long>>()
