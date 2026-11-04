@@ -15,8 +15,8 @@ import java.util.Base64
 class PCloudAuth(private val context: Context) {
 
     companion object {
-        const val PCLOUD_CLIENT_ID = "INSERER_CLIENT_ID_ICI"
-        const val PCLOUD_CLIENT_SECRET = "INSERER_CLIENT_SECRET_ICI"
+        const val PCLOUD_CLIENT_ID = "iOH6ajcrGWb"
+        const val PCLOUD_CLIENT_SECRET = "9SLlqdQP6JH89GqrwIyR1XlBI8gX"
 
         private const val PREFS = "cloudclean_pcloud_state"
         private const val KEY_STATE = "pending_state_"
@@ -35,7 +35,7 @@ class PCloudAuth(private val context: Context) {
             .buildUpon()
             .appendQueryParameter("client_id", PCLOUD_CLIENT_ID)
             .appendQueryParameter("response_type", "code")
-            .appendQueryParameter("redirect_uri", Constants.REDIRECT_URI)
+            .appendQueryParameter("redirect_uri", Constants.REDIRECT_PCLOUD)
             .appendQueryParameter("state", state)
             .build()
         return Intent(Intent.ACTION_VIEW, uri)
